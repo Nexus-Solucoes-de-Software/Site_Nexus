@@ -1,0 +1,16 @@
+# senhas e credenciais nunca vao para o GitHub
+.env
+.env.*
+!.env.example
+
+# arquivos locais / gerados
+.firebase/
+.claude/
+versoes/
+node_modules/
+*.log
+Thumbs.db
+desktop.ini
+
+# testes que não fazem parte do site da Nexus
+loja/

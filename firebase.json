@@ -1,0 +1,38 @@
+{
+  "hosting": [
+    {
+      "site": "nexus-solucoes-de-software-e-tecnologias",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        ".firebaserc",
+        "**/.*",
+        "**/node_modules/**",
+        "versoes/**",
+        "redirecionamento/**"
+      ],
+      "cleanUrls": true,
+      "headers": [
+        {
+          "source": "img/**",
+          "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }]
+        },
+        {
+          "source": "**/*.html",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        }
+      ]
+    },
+    {
+      "site": "lucaslemes-dev",
+      "public": "redirecionamento",
+      "redirects": [
+        {
+          "regex": "^/(.*)$",
+          "destination": "https://nexus-solucoes-de-software-e-tecnologias.web.app/:1",
+          "type": 302
+        }
+      ]
+    }
+  ]
+}
