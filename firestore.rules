@@ -1,0 +1,15 @@
+rules_version = '2';
+// O banco do site guarda só o contador de visitantes.
+// Qualquer um pode ler o número, mas só pode SOMAR 1: não dá para zerar, apagar ou escrever outra coisa.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /estatisticas/site {
+      allow get: if true;
+      allow create: if request.resource.data.keys().hasOnly(['visitas'])
+                    && request.resource.data.visitas == 1;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visitas'])
+                    && request.resource.data.visitas == resource.data.visitas + 1;
+    }
+    // todo o resto do banco fica fechado
+  }
+}

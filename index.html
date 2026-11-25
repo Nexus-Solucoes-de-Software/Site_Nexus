@@ -362,6 +362,9 @@
   @keyframes contorno { to { --giro: 360deg; } }
 
   footer { padding: 32px 0 48px; color: var(--texto2); font-size: .9rem; }
+  /* contador de visitantes: pequeno e apagado, só aparece depois que o número carrega */
+  .visitas { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: .74rem; opacity: .6; font-variant-numeric: tabular-nums; }
+  .visitas[hidden] { display: none; }
 
   /* Botão de tema */
   header.topo .wrap > nav.menu { margin-left: auto; }
@@ -492,6 +495,7 @@
     .canal small { font-size: .88rem; overflow-wrap: anywhere; }
     .canal:hover { transform: none; }
     footer { padding: 24px 0 40px; text-align: center; }
+    .visitas { justify-content: center; }
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
@@ -737,7 +741,9 @@
 </main>
 
 <footer>
-  <div class="wrap">Nexus, soluções de software e tecnologias</div>
+  <div class="wrap">Nexus, soluções de software e tecnologias
+    <p class="visitas" id="visitas" hidden><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><span id="visitas-num"></span> visitantes</p>
+  </div>
 </footer>
 
 <dialog class="tela-cheia" id="tela-cheia" aria-label="Print em tela cheia">
@@ -1298,6 +1304,45 @@
     ajustar(); proximaCadente = 2500;
     if (semMovimento) quadro(0); else iniciar();
   }
+})();
+
+// Contador de visitantes: cada navegador conta uma vez só (marca no localStorage).
+// Guarda só um número no Firestore, nenhum dado pessoal. Se algo falhar, o rodapé fica como está.
+(function () {
+  var doc = 'projects/lucaslemes-dev/databases/(default)/documents/estatisticas/site';
+  var base = 'https://firestore.googleapis.com/v1/';
+  var marca = 'nexus.visitou';
+  var jaVeio = false;
+  try { jaVeio = localStorage.getItem(marca) === '1'; } catch (e) {}
+
+  function mostrar(n) {
+    if (!(n > 0)) return;
+    document.getElementById('visitas-num').textContent = n.toLocaleString('pt-BR');
+    document.getElementById('visitas').hidden = false;
+  }
+  function ler() {
+    return fetch(base + doc).then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { return d && d.fields && d.fields.visitas ? Number(d.fields.visitas.integerValue) : 0; });
+  }
+
+  var pedido;
+  if (jaVeio) {
+    pedido = ler();
+  } else {
+    // soma 1 no servidor e já devolve o total novo
+    pedido = fetch(base + 'projects/lucaslemes-dev/databases/(default)/documents:commit', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ writes: [{ transform: { document: doc, fieldTransforms: [{ fieldPath: 'visitas', increment: { integerValue: '1' } }] } }] })
+    }).then(function (r) {
+      if (!r.ok) return ler();
+      try { localStorage.setItem(marca, '1'); } catch (e) {}
+      return r.json().then(function (d) {
+        var t = d.writeResults && d.writeResults[0] && d.writeResults[0].transformResults;
+        return t && t[0] ? Number(t[0].integerValue) : ler();
+      });
+    });
+  }
+  pedido.then(mostrar).catch(function () {});
 })();
 </script>
 </body>
